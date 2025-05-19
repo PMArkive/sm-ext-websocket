@@ -1,12 +1,17 @@
 name: build
 
 on:
+  workflow_dispatch:
   push:
+    branches:
+      - "main"
     paths:
-      - pushbuild.txt
+      - "src/**"
+      - "third_party/**"
   pull_request:
     paths:
-      - pushbuild.txt
+      - "src/**"
+      - "third_party/**"
 
 permissions:
   contents: write
@@ -37,7 +42,7 @@ jobs:
         run: |
           sudo dpkg --add-architecture i386
           sudo apt-get update
-          sudo apt-get install -y clang g++-multilib zlib1g-dev libssl-dev zlib1g-dev:i386 libssl-dev:i386
+          sudo apt-get install -y clang g++-multilib libssl-dev libssl-dev:i386
           echo "CC=clang" >> $GITHUB_ENV
           echo "CXX=clang++" >> $GITHUB_ENV
           

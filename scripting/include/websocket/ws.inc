@@ -13,26 +13,48 @@ enum WebsocketType
 }
 
 enum AddressFamily {
-  AF_INET,
-  AF_INET6
+  IPV4,
+  IPV6
 }
 
 // Define a typeset for WebSocket callbacks
 typeset WebsocketCallback
 {
-  // OnOpen - Called when the WebSocket connection is opened
+  /**
+  * OnOpen - Called when the WebSocket connection is opened
+  * @param ws                WebSocket handle
+  */
   function void (WebSocket ws);
   
-  // OnMessage - Called when a text message is received
+  /**
+  * OnMessage (STRING) - Called when a text message is received
+  * @param ws                WebSocket handle
+  * @param message           message received
+  * @param wireSize          size of the message on the wire (including null terminator)
+  */
   function void (WebSocket ws, const char[] message, int wireSize);
   
-  // OnMessage (JSON) - Called when a JSON message is received
+  /**
+  * OnMessage (JSON) - Called when a JSON message is received
+  * @param ws                WebSocket handle
+  * @param data              JSON data
+  * @param wireSize          size of the message on the wire (including null terminator)
+  */
   function void (WebSocket ws, const YYJSON data, int wireSize);
   
-  // OnClose - Called when the WebSocket connection is closed
+  /**
+  * OnClose - Called when the WebSocket connection is closed
+  * @param ws                WebSocket handle
+  * @param code              close code
+  * @param reason            reason for closure
+  */
   function void (WebSocket ws, int code, const char[] reason);
   
-  // OnError - Called when an error occurs with the WebSocket connection
+  /**
+  * OnError - Called when an error occurs with the WebSocket connection
+  * @param ws                WebSocket handle
+  * @param errMsg            error message
+  */
   function void (WebSocket ws, const char[] errMsg);
 }
 
@@ -212,7 +234,7 @@ typeset WebsocketServerCallback
   * @param server            websocket server handle
   * @param client            websocket client handle
   * @param message           message received
-  * @param wireSize          size of the message on the wire
+  * @param wireSize          size of the message on the wire (including null terminator)
   * @param RemoteAddr        remote address of the client
   * @param RemoteId          remote identifier of the client
   */
@@ -254,10 +276,10 @@ methodmap WebSocketServer < Handle
   *
   * @param host              host address for the server
   * @param port              port number for the server
-  * @param addressfamily     address family to use. Defaults to AF_INET (IPv4)
+  * @param af                address family to use. Defaults to IPV4
   * @param pingInterval      interval seconds at which the server sends ping messages to clients
   */
-  public native WebSocketServer(const char[] host, int port, AddressFamily addressfamily = AF_INET, int pingInterval = 60);
+  public native WebSocketServer(const char[] host, int port, AddressFamily af = IPV4, int pingInterval = 60);
 
   /**
   * Set the callback for when a message is received

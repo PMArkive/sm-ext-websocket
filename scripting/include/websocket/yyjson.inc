@@ -34,7 +34,8 @@ enum YYJSON_READ_FLAG
   YYJSON_READ_ALLOW_INF_AND_NAN      = 1 << 4, // Allow nan/inf number (non-standard JSON)
   YYJSON_READ_NUMBER_AS_RAW          = 1 << 5, // Read numbers as raw strings
   YYJSON_READ_ALLOW_INVALID_UNICODE  = 1 << 6, // Allow invalid unicode when parsing string
-  YYJSON_READ_BIGNUM_AS_RAW          = 1 << 7  // Read big numbers as raw strings
+  YYJSON_READ_BIGNUM_AS_RAW          = 1 << 7, // Read big numbers as raw strings
+  YYJSON_READ_ALLOW_BOM              = 1 << 8  // Allow BOM (Byte Order Mark) at the beginning of the JSON string
 }
 
 // JSON writer flags for serialization behavior
@@ -48,7 +49,17 @@ enum YYJSON_WRITE_FLAG
   YYJSON_WRITE_INF_AND_NAN_AS_NULL    = 1 << 4, // Write inf/nan as null
   YYJSON_WRITE_ALLOW_INVALID_UNICODE  = 1 << 5, // Allow invalid unicode when encoding string
   YYJSON_WRITE_PRETTY_TWO_SPACES      = 1 << 6, // Use 2 spaces for indent when pretty print
-  YYJSON_WRITE_NEWLINE_AT_END         = 1 << 7  // Add newline at the end of output
+  YYJSON_WRITE_NEWLINE_AT_END         = 1 << 7, // Add newline at the end of output
+  YYJSON_WRITE_FP_TO_FLOAT            = 1 << 27 // Write floating-point numbers using single-precision (float)
+}
+
+/** Write floating-point number using fixed-point notation
+ - This is similar to ECMAScript Number.prototype.toFixed(prec) but with trailing zeros removed. The prec ranges from 1 to 15
+ - This will produce shorter output but may lose some precision
+*/
+stock YYJSON_WRITE_FLAG YYJSON_WRITE_FP_TO_FIXED(int n)
+{
+  return view_as<YYJSON_WRITE_FLAG>(n << 28);
 }
 
 // Sort order for arrays and objects
@@ -74,12 +85,11 @@ methodmap YYJSON < Handle
   * - [: start array
   * - ]: end array
   *
-  * @param format             Format string
-  * @param ...                Arguments based on format string
+  * @param format            Format string
+  * @param ...               Arguments based on format string
   *
-  * @return                   JSON handle
-  *
-  * @error                    If format string is invalid or arguments don't match
+  * @return                  JSON handle
+  * @error                   If format string is invalid or arguments don't match
   */
   public static native any Pack(const char[] format, any ...);
 
@@ -93,7 +103,6 @@ methodmap YYJSON < Handle
   * @param value             JSON handle to store the current value
   *
   * @return                  True if there are more elements, false when iteration is complete
-  *
   * @error                   Invalid handle or handle is not an object
   */
   public native bool ForeachObject(char[] buffer, int maxlength, YYJSON &value);
@@ -107,7 +116,6 @@ methodmap YYJSON < Handle
   * @param value             JSON handle to store the current value
   *
   * @return                  True if there are more elements, false when iteration is complete
-  *
   * @error                   Invalid handle or handle is not an array
   */
   public native bool ForeachArray(int &index, YYJSON &value);
@@ -121,7 +129,6 @@ methodmap YYJSON < Handle
   * @param maxlength         Maximum length of the string buffer
   *
   * @return                  True if there are more elements, false when iteration is complete
-  *
   * @error                   Invalid handle or handle is not an object
   */
   public native bool ForeachKey(char[] buffer, int maxlength);
@@ -134,7 +141,6 @@ methodmap YYJSON < Handle
   * @param index             Variable to store current array index (starting from 0)
   *
   * @return                  True if there are more elements, false when iteration is complete
-  *
   * @error                   Invalid handle or handle is not an array
   */
   public native bool ForeachIndex(int &index);
@@ -185,25 +191,26 @@ methodmap YYJSON < Handle
   *
   * @param string            String or file to parse
   * @param is_file           True to treat string param as file, false otherwise
-  * @param flag              The JSON read options
   * @param is_mutable_doc    True to create a mutable document, false to create an immutable one
+  * @param flag              The JSON read options
   *
   * @return                  JSON handle, false on failure
   */
   public static native any Parse(const char[] string, bool is_file = false, bool is_mutable_doc = false, YYJSON_READ_FLAG flag = YYJSON_READ_NOFLAG);
 
   /**
-  * Copies and returns a new mutable value from input, returns NULL on error. This makes a deep-copy on the mutable value. The memory was managed by mutable document
+  * Creates a deep copy of a JSON value and returns it as a new JSON handle.
   *
   * @note                    Needs to be freed using delete or CloseHandle()
   * @note                    This function is recursive and may cause a stack overflow if the object level is too deep
+  * @note                    The mutability of the returned copy depends on the targetDoc parameter
   *
-  * @param value1            JSON handle1
-  * @param value2            JSON handle2
+  * @param targetDoc         The target document that determines whether the copy will be mutable or immutable
+  * @param sourceValue       The source JSON value to be copied
   *
-  * @return                  JSON handle, false on failure
+  * @return                  New JSON handle on success, false on failure
   */
-  public static native any DeepCopy(const YYJSON value1, const YYJSON value2);
+  public static native any DeepCopy(const YYJSON targetDoc, const YYJSON sourceValue);
 
   /**
   * Returns the JSON value's type description
@@ -803,10 +810,11 @@ methodmap YYJSONObject < YYJSON
   * The array must contain an even number of strings, where even indices are keys 
   * and odd indices are values. Keys cannot be empty strings.
   *
-  * @param pairs             Array of strings containing alternating keys and values.
-  * @param size              Total size of the array (must be even).
-  * @return                  New JSON object handle.
-  * @error                   If array size is invalid, any key is empty, or if creation fails.
+  * @param pairs             Array of strings containing alternating keys and values
+  * @param size              Total size of the array (must be even)
+  *
+  * @return                  New JSON object handle
+  * @error                   If array size is invalid, any key is empty, or if creation fails
   *
   */
   public static native YYJSONObject FromStrings(const char[][] pairs, int size);
@@ -1043,7 +1051,6 @@ methodmap YYJSONObject < YYJSON
   * @param order             Sort order, see YYJSON_SORT_ORDER enums
   *
   * @return                  True on success, false on failure
-  *
   * @error                   Invalid handle or handle is not an object
   */
   public native bool Sort(YYJSON_SORT_ORDER order = YYJSON_SORT_ASC);
@@ -1337,7 +1344,6 @@ methodmap YYJSONArray < YYJSON
   * @param value             The boolean value to search for
   *
   * @return                  The index of the first matching element, or -1 if not found
-  *
   * @error                   Invalid handle or handle is not an array
   */
   public native int IndexOfBool(bool value);
@@ -1348,7 +1354,6 @@ methodmap YYJSONArray < YYJSON
   * @param value             The string value to search for
   *
   * @return                  The index of the first matching element, or -1 if not found
-  *
   * @error                   Invalid handle or handle is not an array
   */
   public native int IndexOfString(const char[] value);
@@ -1359,7 +1364,6 @@ methodmap YYJSONArray < YYJSON
   * @param value             The integer value to search for
   *
   * @return                  The index of the first matching element, or -1 if not found
-  *
   * @error                   Invalid handle or handle is not an array
   */
   public native int IndexOfInt(int value);
@@ -1370,7 +1374,6 @@ methodmap YYJSONArray < YYJSON
   * @param value             The integer64 value to search for as string
   *
   * @return                  The index of the first matching element, or -1 if not found
-  *
   * @error                   Invalid handle, handle is not an array, or invalid integer64 string format
   */
   public native int IndexOfInt64(const char[] value);
@@ -1381,7 +1384,6 @@ methodmap YYJSONArray < YYJSON
   * @param value             The float value to search for
   *
   * @return                  The index of the first matching element, or -1 if not found
-  *
   * @error                   Invalid handle or handle is not an array
   */
   public native int IndexOfFloat(float value);
@@ -1406,7 +1408,6 @@ methodmap YYJSONArray < YYJSON
   * @param order             Sort order, see YYJSON_SORT_ORDER enums
   *
   * @return                  True on success, false on failure
-  *
   * @error                   Invalid handle or handle is not an array
   */
   public native bool Sort(YYJSON_SORT_ORDER order = YYJSON_SORT_ASC);

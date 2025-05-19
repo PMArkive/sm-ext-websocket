@@ -25,24 +25,25 @@ for cxx in builder.targets:
     os.path.join(builder.sourcePath, 'src'),
     os.path.join(builder.sourcePath, 'third_party', 'ixwebsocket'),
     os.path.join(builder.sourcePath, 'third_party', 'yyjson'),
+    os.path.join(builder.sourcePath, 'third_party', 'zlib'),
+  ]
+
+  binary.compiler.postlink += [
+    ixwebsocket[arch].binary,
+    libyyjson[arch].binary,
+    libz[arch].binary,
   ]
 
   if binary.compiler.target.platform == 'linux':
     binary.compiler.postlink += [
-      '-lz',
       '-lssl',
-      ixwebsocket[arch].binary,
-      libyyjson[arch].binary,
     ]
   elif binary.compiler.target.platform == 'windows':
     binary.compiler.postlink += [
       'ws2_32.lib',
       'crypt32.lib',
-      ixwebsocket[arch].binary,
-      libyyjson[arch].binary,
-      libz[arch].binary,
       os.path.join(builder.sourcePath, 'third_party', 'openssl', 'lib', 'libssl_static_{}.lib'.format(arch)),
       os.path.join(builder.sourcePath, 'third_party', 'openssl', 'lib', 'libcrypto_static_{}.lib'.format(arch)),
-		]
+   ]
 
   Extension.extensions += [builder.Add(binary)]

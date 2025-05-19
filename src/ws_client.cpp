@@ -9,6 +9,9 @@ WebSocketClient::WebSocketClient(const char* url, uint8_t type)
 	m_webSocket->disableAutomaticReconnection();
 	m_callback_type = type;
 
+	m_extraHeaders["User-Agent"] = "sm-ext-websocket/" + std::string(SMEXT_CONF_VERSION);
+	m_webSocket->setExtraHeaders(m_extraHeaders);
+
 	m_webSocket->setOnMessageCallback([this](const ix::WebSocketMessagePtr& msg) {
 		switch (msg->type)
 		{
@@ -98,7 +101,7 @@ void WebSocketClient::OnError(ix::WebSocketErrorInfo errorInfo)
 
 void WsMessageTaskContext::OnCompleted()
 {
-	const size_t messageLength = m_message.length() + 1;
+	const size_t messageLength = m_message.length();
 
 	switch (m_client->m_callback_type)
 	{
@@ -106,7 +109,7 @@ void WsMessageTaskContext::OnCompleted()
 		{
 			m_client->pMessageForward->PushCell(m_client->m_websocket_handle);
 			m_client->pMessageForward->PushString(m_message.c_str());
-			m_client->pMessageForward->PushCell(messageLength);
+			m_client->pMessageForward->PushCell(messageLength + 1);
 			m_client->pMessageForward->Execute(nullptr);
 			break;
 		}
@@ -139,7 +142,7 @@ void WsMessageTaskContext::OnCompleted()
 
 			m_client->pMessageForward->PushCell(m_client->m_websocket_handle);
 			m_client->pMessageForward->PushCell(m_client->m_json_handle);
-			m_client->pMessageForward->PushCell(messageLength);
+			m_client->pMessageForward->PushCell(messageLength + 1);
 			m_client->pMessageForward->Execute(nullptr);
 
 			handlesys->FreeHandle(m_client->m_json_handle, &pSec);

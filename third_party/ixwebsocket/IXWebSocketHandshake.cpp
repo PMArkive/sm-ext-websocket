@@ -69,7 +69,7 @@ namespace ix
         ss << " ";
         ss << reason;
         ss << "\r\n";
-        ss << "Server: " << userAgent() << "\r\n";
+        //ss << "Server: " << userAgent() << "\r\n";
 
         // Socket write can only be cancelled through a timeout here, not manually.
         static std::atomic<bool> requestInitCancellation(false);
@@ -114,7 +114,10 @@ namespace ix
 
         std::stringstream ss;
         ss << "GET " << path << " HTTP/1.1\r\n";
-        ss << "Host: " << host << ":" << port << "\r\n";
+        if (extraHeaders.find("Host") == extraHeaders.end())
+        {
+            ss << "Host: " << host << ":" << port << "\r\n";
+        }
         ss << "Upgrade: websocket\r\n";
         ss << "Connection: Upgrade\r\n";
         ss << "Sec-WebSocket-Version: 13\r\n";
@@ -360,7 +363,7 @@ namespace ix
         ss << "Sec-WebSocket-Accept: " << std::string(output) << "\r\n";
         ss << "Upgrade: websocket\r\n";
         ss << "Connection: Upgrade\r\n";
-        ss << "Server: " << userAgent() << "\r\n";
+        //ss << "Server: " << userAgent() << "\r\n";
 
         // Parse the client headers. Does it support deflate ?
         std::string header = headers["sec-websocket-extensions"];

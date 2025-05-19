@@ -46,10 +46,10 @@ namespace ix
         stopAcceptingConnections();
 
         auto clients = getClients();
-				for (auto client : clients)
-				{
-						client.first->close();
-				} 
+        for (auto client : clients)
+        {
+            client.first->close();
+        }
 
         SocketServer::stop();
     }
@@ -171,7 +171,7 @@ namespace ix
             }
         }
     }
-		
+
     std::map<std::shared_ptr<WebSocket>, const std::string> WebSocketServer::getClients()
     {
         std::lock_guard<std::mutex> lock(_clientsMutex);
@@ -197,8 +197,9 @@ namespace ix
                 auto remoteIp = connectionState->getRemoteIp();
                 if (msg->type == ix::WebSocketMessageType::Message)
                 {
-									for (auto &client : getClients()) {
-										if (client.first.get() != &webSocket)
+                    for (auto&& client : getClients())
+                    {
+                        if (client.first.get() != &webSocket)
                         {
                             client.first->send(msg->str, msg->binary);
 
@@ -209,7 +210,7 @@ namespace ix
                                 std::this_thread::sleep_for(duration);
                             } while (client.first->bufferedAmount() != 0);
                         }
-									}
+                    }
                 }
             });
     }

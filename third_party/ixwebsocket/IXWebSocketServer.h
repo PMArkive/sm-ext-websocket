@@ -68,8 +68,7 @@ namespace ix
         OnClientMessageCallback _onClientMessageCallback;
 
         std::mutex _clientsMutex;
-        //std::set<std::shared_ptr<WebSocket>> _clients;
-				std::map<std::shared_ptr<WebSocket>, const std::string> _clients;
+        std::map<std::shared_ptr<WebSocket>, const std::string> _clients;
 
         const static bool kDefaultEnablePong;
         const static int kPingIntervalSeconds;

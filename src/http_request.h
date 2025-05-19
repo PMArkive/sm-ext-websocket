@@ -18,11 +18,11 @@ public:
 	void SetBody(const std::string &body);
 	void SetJsonBody(YYJsonWrapper* json);
 	void AddHeader(const std::string &key, const std::string &value);
-	int GetTimeout();
-	int GetMaxRedirects();
-	bool GetFollowRedirect();
-	bool GetCompression();
-	bool GetVerbose();
+	int GetTimeout() const;
+	int GetMaxRedirects() const;
+	bool GetFollowRedirect() const;
+	bool GetCompression() const;
+	bool GetVerbose() const;
 	void SetTimeout(int timeout);
 	void SetVerbose(bool verbose);
 	void SetCompression(bool compress);

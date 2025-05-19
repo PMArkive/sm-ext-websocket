@@ -169,7 +169,7 @@ void WsServerMessageTaskContext::OnCompleted()
 	m_server->pMessageForward->PushCell(m_server->m_webSocketServer_handle);
 	m_server->pMessageForward->PushCell(pWebSocketClient->m_websocket_handle);
 	m_server->pMessageForward->PushString(m_message.c_str());
-	m_server->pMessageForward->PushCell(m_message.length());
+	m_server->pMessageForward->PushCell(m_message.length() + 1);
 	m_server->pMessageForward->PushString(remoteAddress.c_str());
 	m_server->pMessageForward->PushString(m_connectionState->getId().c_str());
 	m_server->pMessageForward->Execute(nullptr);
