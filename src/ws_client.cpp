@@ -83,7 +83,7 @@ void WebSocketClient::OnClose(ix::WebSocketCloseInfo closeInfo)
 	{
 		return;
 	}
-	
+
 	WsCloseTaskContext *context = new WsCloseTaskContext(this, closeInfo);
 	g_WebsocketExt.AddTaskToQueue(context);
 }
@@ -115,37 +115,32 @@ void WsMessageTaskContext::OnCompleted()
 		}
 		case WebSocket_JSON:
 		{
-			auto pYYJsonWrapper = CreateWrapper();
+			char error[256];
+			YYJSONValue* pYYJSONValue = g_pYYJSONManager->ParseJSON(m_message.c_str(), false, false, 0, error, sizeof(error));
 
-			yyjson_read_err readError;
-			yyjson_doc *idoc = yyjson_read_opts(const_cast<char*>(m_message.c_str()), messageLength, 0, nullptr, &readError);
-
-			if (readError.code)
+			if (!pYYJSONValue)
 			{
-				yyjson_doc_free(idoc);
-				smutils->LogError(myself, "parse JSON message error (%u): %s at position: %d", readError.code, readError.msg, readError.pos);
+				smutils->LogError(myself, "parse JSON message error: %s", error);
 				return;
 			}
 
-			pYYJsonWrapper->m_pDocument = WrapImmutableDocument(idoc);
-			pYYJsonWrapper->m_pVal = yyjson_doc_get_root(idoc);
-
 			HandleError err;
 			HandleSecurity pSec(nullptr, myself->GetIdentity());
-			m_client->m_json_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper.release(), &pSec, nullptr, &err);
+			Handle_t jsonHandle = handlesys->CreateHandleEx(g_pYYJSONManager->GetHandleType(), pYYJSONValue, &pSec, nullptr, &err);
 
-			if (!m_client->m_json_handle)
+			if (!jsonHandle)
 			{
+				g_pYYJSONManager->Release(pYYJSONValue);
 				smutils->LogError(myself, "Could not create JSON handle (error %d)", err);
 				return;
 			}
 
 			m_client->pMessageForward->PushCell(m_client->m_websocket_handle);
-			m_client->pMessageForward->PushCell(m_client->m_json_handle);
+			m_client->pMessageForward->PushCell(jsonHandle);
 			m_client->pMessageForward->PushCell(messageLength + 1);
 			m_client->pMessageForward->Execute(nullptr);
 
-			handlesys->FreeHandle(m_client->m_json_handle, &pSec);
+			handlesys->FreeHandle(jsonHandle, &pSec);
 			break;
 		}
 	}

@@ -49,7 +49,7 @@ static cell_t ws_SetMessageCallback(IPluginContext *pContext, const cell_t *para
 	if (pWebSocketClient->pMessageForward) {
 		forwards->ReleaseForward(pWebSocketClient->pMessageForward);
 	}
-	
+
 	pWebSocketClient->pMessageForward = forwards->CreateForwardEx(nullptr, ET_Ignore, 3, nullptr, Param_Cell, pWebSocketClient->m_callback_type == WebSocket_JSON ? Param_Cell : Param_String, Param_Cell);
 	if (!pWebSocketClient->pMessageForward || !pWebSocketClient->pMessageForward->AddFunction(callback))
 	{
@@ -254,24 +254,29 @@ static cell_t ws_WriteString(IPluginContext *pContext, const cell_t *params)
 static cell_t ws_WriteJSON(IPluginContext *pContext, const cell_t *params)
 {
 	WebSocketClient* pWebSocketClient = GetWsPointer(pContext, params[1]);
+	YYJSONValue* pYYJSONValue = g_pYYJSONManager->GetFromHandle(pContext, params[2]);
 
-	if (!pWebSocketClient)
+	if (!pWebSocketClient || !pYYJSONValue)
 	{
 		return 0;
 	}
 
-	YYJsonWrapper* pYYJsonWrapper = g_WebsocketExt.GetJSONPointer(pContext, params[2]);
-
-	if (!pYYJsonWrapper)
+	size_t json_size = g_pYYJSONManager->GetSerializedSize(pYYJSONValue);
+	if (json_size == 0)
 	{
-		return 0;
+		return pContext->ThrowNativeError("Failed to get JSON serialized size");
 	}
 
-	char *json_str = yyjson_mut_val_write(pYYJsonWrapper->m_pVal_mut, 0, nullptr);
-	
+	char* json_str = (char*)malloc(json_size);
 	if (!json_str)
 	{
-		return 0;
+		return pContext->ThrowNativeError("Failed to allocate buffer for JSON string");
+	}
+
+	if (!g_pYYJSONManager->WriteToString(pYYJSONValue, json_str, json_size))
+	{
+		free(json_str);
+		return pContext->ThrowNativeError("Failed to serialize JSON to string");
 	}
 
 	pWebSocketClient->m_webSocket->send(json_str);

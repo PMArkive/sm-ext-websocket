@@ -15,24 +15,25 @@ void HttpRequest::SetBody(const std::string &body)
 	m_request->body = body;
 }
 
-void HttpRequest::SetJsonBody(YYJsonWrapper* json)
+void HttpRequest::SetJsonBody(YYJSONValue* json)
 {
 	if (!json) return;
 
-	char* jsonStr;
+	size_t json_size = g_pYYJSONManager->GetSerializedSize(json);
+	if (json_size == 0) return;
 
-	if (json->m_pDocument_mut) {
-		jsonStr = yyjson_mut_write(json->m_pDocument_mut.get(), 0, nullptr);
-	} else {
-		jsonStr = yyjson_write(json->m_pDocument.get(), 0, nullptr);
-	}
+	char* jsonStr = (char*)malloc(json_size);
+	if (!jsonStr) return;
 
-	if (jsonStr)
+	if (!g_pYYJSONManager->WriteToString(json, jsonStr, json_size))
 	{
-		m_request->body = jsonStr;
-		m_request->extraHeaders["Content-Type"] = "application/json";
 		free(jsonStr);
+		return;
 	}
+
+	m_request->body = jsonStr;
+	m_request->extraHeaders["Content-Type"] = "application/json";
+	free(jsonStr);
 }
 
 void HttpRequest::AddHeader(const std::string &key, const std::string &value)
@@ -130,10 +131,10 @@ bool HttpRequest::Get(IPluginFunction *callback, cell_t value)
 		});
 }
 
-bool HttpRequest::PostJson(YYJsonWrapper* json, IPluginFunction *callback, cell_t value)
+bool HttpRequest::PostJson(YYJSONValue* json, IPluginFunction *callback, cell_t value)
 {
 	if (!json) return false;
-	
+
 	m_request->verb = "POST";
 	SetJsonBody(json);
 	return m_httpclient.performRequest(m_request, 
@@ -142,10 +143,10 @@ bool HttpRequest::PostJson(YYJsonWrapper* json, IPluginFunction *callback, cell_
 		});
 }
 
-bool HttpRequest::PutJson(YYJsonWrapper* json, IPluginFunction *callback, cell_t value)
+bool HttpRequest::PutJson(YYJSONValue* json, IPluginFunction *callback, cell_t value)
 {
 	if (!json) return false;
-	
+
 	m_request->verb = "PUT";
 	SetJsonBody(json);
 	return m_httpclient.performRequest(m_request, 
@@ -154,10 +155,10 @@ bool HttpRequest::PutJson(YYJsonWrapper* json, IPluginFunction *callback, cell_t
 		});
 }
 
-bool HttpRequest::PatchJson(YYJsonWrapper* json, IPluginFunction *callback, cell_t value)
+bool HttpRequest::PatchJson(YYJSONValue* json, IPluginFunction *callback, cell_t value)
 {
 	if (!json) return false;
-	
+
 	m_request->verb = "PATCH";
 	SetJsonBody(json);
 	return m_httpclient.performRequest(m_request, 
@@ -190,7 +191,7 @@ std::string HttpRequest::BuildFormData()
 {
 	std::string formData;
 	bool first = true;
-	
+
 	for (const auto& param : m_formParams) {
 		if (!first) {
 			formData += "&";
@@ -198,7 +199,7 @@ std::string HttpRequest::BuildFormData()
 		formData += m_httpclient.urlEncode(param.first) + "=" + m_httpclient.urlEncode(param.second);
 		first = false;
 	}
-	
+
 	return formData;
 }
 

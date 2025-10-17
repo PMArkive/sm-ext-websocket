@@ -1,5 +1,3 @@
-// HTTP FUNCTIONS ARE NOT COMPLETED, THEY ARE STILL BEING TESTED
-
 // Define a typeset for HTTP response callbacks
 typeset ResponseCallback
 {

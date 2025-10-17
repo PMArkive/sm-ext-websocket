@@ -49,7 +49,7 @@ static cell_t ws_SetMessageCallback(IPluginContext *pContext, const cell_t *para
 	if (pWebsocketServer->pMessageForward) {
 		forwards->ReleaseForward(pWebsocketServer->pMessageForward);
 	}
-	
+
 	pWebsocketServer->pMessageForward = forwards->CreateForwardEx(nullptr, ET_Ignore, 6, nullptr, Param_Cell, Param_Cell, Param_String, Param_Cell, Param_String, Param_String);
 	if (!pWebsocketServer->pMessageForward || !pWebsocketServer->pMessageForward->AddFunction(callback))
 	{

@@ -16,7 +16,7 @@ public:
 	bool disconnectClient(const std::string& clientId);
 	std::vector<std::string> getClientIds();
 	bool getClientHeaders(const std::string& clientId, ix::WebSocketHttpHeaders& outHeaders);
-	
+
 	ix::WebSocketServer m_webSocketServer;
 	Handle_t m_webSocketServer_handle = BAD_HANDLE;
 
@@ -34,7 +34,7 @@ public:
 		{
 			if (id == clientId) return websocket;
 		}
-		
+
 		return nullptr;
 	}
 
@@ -49,9 +49,9 @@ public:
 	WsServerMessageTaskContext(WebSocketServer* server, const std::string& message, 
 		std::shared_ptr<ix::ConnectionState> connectionState, ix::WebSocket* client) 
 		: m_server(server), m_message(message), m_connectionState(connectionState), m_client(client) {}
-	
+
 	virtual void OnCompleted() override;
-	
+
 private:
 	WebSocketServer* m_server;
 	std::string m_message;
@@ -65,9 +65,9 @@ public:
 	WsServerOpenTaskContext(WebSocketServer* server, ix::WebSocketOpenInfo openInfo, 
 		std::shared_ptr<ix::ConnectionState> connectionState) 
 		: m_server(server), m_openInfo(openInfo), m_connectionState(connectionState) {}
-	
+
 	virtual void OnCompleted() override;
-	
+
 private:
 	WebSocketServer* m_server;
 	ix::WebSocketOpenInfo m_openInfo;
@@ -80,9 +80,9 @@ public:
 	WsServerCloseTaskContext(WebSocketServer* server, ix::WebSocketCloseInfo closeInfo, 
 		std::shared_ptr<ix::ConnectionState> connectionState) 
 		: m_server(server), m_closeInfo(closeInfo), m_connectionState(connectionState) {}
-	
+
 	virtual void OnCompleted() override;
-	
+
 private:
 	WebSocketServer* m_server;
 	ix::WebSocketCloseInfo m_closeInfo;
@@ -95,9 +95,9 @@ public:
 	WsServerErrorTaskContext(WebSocketServer* server, ix::WebSocketErrorInfo errorInfo, 
 		std::shared_ptr<ix::ConnectionState> connectionState) 
 		: m_server(server), m_errorInfo(errorInfo), m_connectionState(connectionState) {}
-	
+
 	virtual void OnCompleted() override;
-	
+
 private:
 	WebSocketServer* m_server;
 	ix::WebSocketErrorInfo m_errorInfo;

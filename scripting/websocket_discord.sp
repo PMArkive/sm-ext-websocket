@@ -112,7 +112,6 @@ void onMessage(WebSocket ws, const YYJSON message, int wireSize)
 
         char[] content = new char[len];
         message.PtrGetString("/d/content", content, len);
-        
         PrintToServer("content: %s", content);
       }
     }

@@ -25,7 +25,7 @@ typeset WebsocketCallback
   * @param ws                WebSocket handle
   */
   function void (WebSocket ws);
-  
+
   /**
   * OnMessage (STRING) - Called when a text message is received
   * @param ws                WebSocket handle
@@ -33,7 +33,7 @@ typeset WebsocketCallback
   * @param wireSize          size of the message on the wire (including null terminator)
   */
   function void (WebSocket ws, const char[] message, int wireSize);
-  
+
   /**
   * OnMessage (JSON) - Called when a JSON message is received
   * @param ws                WebSocket handle
@@ -41,7 +41,7 @@ typeset WebsocketCallback
   * @param wireSize          size of the message on the wire (including null terminator)
   */
   function void (WebSocket ws, const YYJSON data, int wireSize);
-  
+
   /**
   * OnClose - Called when the WebSocket connection is closed
   * @param ws                WebSocket handle
@@ -49,7 +49,7 @@ typeset WebsocketCallback
   * @param reason            reason for closure
   */
   function void (WebSocket ws, int code, const char[] reason);
-  
+
   /**
   * OnError - Called when an error occurs with the WebSocket connection
   * @param ws                WebSocket handle
@@ -67,9 +67,9 @@ methodmap WebSocket < Handle
   * @note All callbacks need to be set before client connect
   *
   * @param url               WebSocket server URL
-  * @param type              JSON or string
+  * @param type              JSON or string. Defaults to string
   */
-  public native WebSocket(const char[] url, WebsocketType type);
+  public native WebSocket(const char[] url, WebsocketType type = Websocket_STRING);
 
   /**
   * Set the callback for when a message is received

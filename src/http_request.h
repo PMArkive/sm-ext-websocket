@@ -8,15 +8,15 @@ public:
 
 	bool Get(IPluginFunction *callback, cell_t value);
 	bool Delete(IPluginFunction *callback, cell_t value);
-	bool PostJson(YYJsonWrapper* json, IPluginFunction *callback, cell_t value);
-	bool PutJson(YYJsonWrapper* json, IPluginFunction *callback, cell_t value);
-	bool PatchJson(YYJsonWrapper* json, IPluginFunction *callback, cell_t value);
+	bool PostJson(YYJSONValue* json, IPluginFunction *callback, cell_t value);
+	bool PutJson(YYJSONValue* json, IPluginFunction *callback, cell_t value);
+	bool PatchJson(YYJSONValue* json, IPluginFunction *callback, cell_t value);
 	bool PostForm(IPluginFunction *callback, cell_t value);
 
 	void AppendFormParam(const std::string &key, const std::string &value);
-	
+
 	void SetBody(const std::string &body);
-	void SetJsonBody(YYJsonWrapper* json);
+	void SetJsonBody(YYJSONValue* json);
 	void AddHeader(const std::string &key, const std::string &value);
 	int GetTimeout() const;
 	int GetMaxRedirects() const;
@@ -34,7 +34,7 @@ public:
 	const ix::WebSocketHttpHeaders& GetResponseHeaders() const;
 
 	void onResponse(const ix::HttpResponsePtr response, IPluginFunction *callback, cell_t value);
-	
+
 	ix::HttpClient m_httpclient;
 	ix::HttpRequestArgsPtr m_request;
 
@@ -54,9 +54,9 @@ class HttpResponseTaskContext : public ITaskContext
 public:
 	HttpResponseTaskContext(HttpRequest* client, const ix::HttpResponsePtr& response, IPluginFunction *callback, cell_t value) 
 		: m_client(client), m_response(response), m_callback(callback), m_value(value){}
-	
+
 	virtual void OnCompleted() override;
-	
+
 private:
 	HttpRequest* m_client;
 	ix::HttpResponsePtr m_response;

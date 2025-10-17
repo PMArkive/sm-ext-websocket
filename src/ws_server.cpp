@@ -142,7 +142,7 @@ bool WebSocketServer::getClientHeaders(const std::string& clientId, ix::WebSocke
 		outHeaders = it->second;
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -173,7 +173,7 @@ void WsServerMessageTaskContext::OnCompleted()
 	m_server->pMessageForward->PushString(remoteAddress.c_str());
 	m_server->pMessageForward->PushString(m_connectionState->getId().c_str());
 	m_server->pMessageForward->Execute(nullptr);
-	
+
 	handlesys->FreeHandle(pWebSocketClient->m_websocket_handle, nullptr);
 }
 

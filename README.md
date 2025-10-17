@@ -4,7 +4,6 @@
 This is a [SourceMod](http://www.sourcemod.net/) extension that provides some methods for HTTP JSON and websocket communication
 
 ## Features
-* Relies on [YYJSON](https://github.com/ibireme/yyjson) which A high performance JSON library written in ANSI C
 * Relies on [IXWebSocket](https://github.com/machinezone/IXWebSocket) which is C++ library for WebSocket client and server development. It has minimal dependencies
 * Support TEXT and JSON data
 * Support client and server
@@ -12,6 +11,14 @@ This is a [SourceMod](http://www.sourcemod.net/) extension that provides some me
 * Support SSL
 * Support x64
 * Support HTTP RESTful API with JSON and form data
+
+## Dependencies
+* [sm-ext-yyjson](https://github.com/ProjectSky/sm-ext-yyjson) - Required for JSON parsing and generation
+
+## Installation
+1. Download and install [sm-ext-yyjson](https://github.com/ProjectSky/sm-ext-yyjson/releases) first
+2. Download this extension from [sm-ext-websocket](https://github.com/ProjectSky/sm-ext-websocket/releases)
+3. Extract the files to your SourceMod directory
 
 ## How to build this?
 ``` sh
@@ -25,7 +32,6 @@ ambuild
 ```
 
 ## Native
-* [json](https://github.com/ProjectSky/sm-ext-websocket/blob/main/scripting/include/websocket/yyjson.inc)
 * [websocket](https://github.com/ProjectSky/sm-ext-websocket/blob/main/scripting/include/websocket/ws.inc)
 * [http](https://github.com/ProjectSky/sm-ext-websocket/blob/main/scripting/include/websocket/http.inc)
 
@@ -36,6 +42,7 @@ ambuild
 - [x] WebSocket server support
 - [x] Windows support
 - [x] HTTP support
+- [x] Use sourcemod extension interface for JSON functionality instead of bundling yyjson library
 
 ## NOTES
 * Server will not process data during the hibernation. You can set sv_hibernate_when_empty to 0 to disable hibernation

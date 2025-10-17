@@ -60,9 +60,9 @@ static cell_t http_Get(IPluginContext *pContext, const cell_t *params)
 static cell_t http_PostJson(IPluginContext *pContext, const cell_t *params)
 {
 	HttpRequest *pHttpRequest = GetHttpPointer(pContext, params[1]);
-	YYJsonWrapper *json = g_WebsocketExt.GetJSONPointer(pContext, params[2]);
-	
-	if (!pHttpRequest || !json) return 0;
+	YYJSONValue *pYYJSONValue = g_pYYJSONManager->GetFromHandle(pContext, params[2]);
+
+	if (!pHttpRequest || !pYYJSONValue) return 0;
 
 	IPluginFunction *callback = pContext->GetFunctionById(params[3]);
 
@@ -79,7 +79,7 @@ static cell_t http_PostJson(IPluginContext *pContext, const cell_t *params)
 	}
 
 	cell_t value = params[4];
-	return pHttpRequest->PostJson(json, callback, value);
+	return pHttpRequest->PostJson(pYYJSONValue, callback, value);
 }
 
 static cell_t http_AppendFormParam(IPluginContext *pContext, const cell_t *params)
@@ -90,7 +90,7 @@ static cell_t http_AppendFormParam(IPluginContext *pContext, const cell_t *param
 	char *key, *value;
 	pContext->LocalToString(params[2], &key);
 	pContext->LocalToString(params[3], &value);
-	
+
 	pHttpRequest->AppendFormParam(key, value);
 	return 1;
 }
@@ -121,9 +121,9 @@ static cell_t http_PostForm(IPluginContext *pContext, const cell_t *params)
 static cell_t http_PutJson(IPluginContext *pContext, const cell_t *params)
 {
 	HttpRequest *pHttpRequest = GetHttpPointer(pContext, params[1]);
-	YYJsonWrapper *json = g_WebsocketExt.GetJSONPointer(pContext, params[2]);
-	
-	if (!pHttpRequest || !json) return 0;
+	YYJSONValue *pYYJSONValue = g_pYYJSONManager->GetFromHandle(pContext, params[2]);
+
+	if (!pHttpRequest || !pYYJSONValue) return 0;
 
 	IPluginFunction *callback = pContext->GetFunctionById(params[3]);
 
@@ -140,15 +140,15 @@ static cell_t http_PutJson(IPluginContext *pContext, const cell_t *params)
 	}
 
 	cell_t value = params[4];
-	return pHttpRequest->PutJson(json, callback, value);
+	return pHttpRequest->PutJson(pYYJSONValue, callback, value);
 }
 
 static cell_t http_PatchJson(IPluginContext *pContext, const cell_t *params)
 {
 	HttpRequest *pHttpRequest = GetHttpPointer(pContext, params[1]);
-	YYJsonWrapper *json = g_WebsocketExt.GetJSONPointer(pContext, params[2]);
-	
-	if (!pHttpRequest || !json) return 0;
+	YYJSONValue *pYYJSONValue = g_pYYJSONManager->GetFromHandle(pContext, params[2]);
+
+	if (!pHttpRequest || !pYYJSONValue) return 0;
 
 	IPluginFunction *callback = pContext->GetFunctionById(params[3]);
 
@@ -165,7 +165,7 @@ static cell_t http_PatchJson(IPluginContext *pContext, const cell_t *params)
 	}
 
 	cell_t value = params[4];
-	return pHttpRequest->PatchJson(json, callback, value);
+	return pHttpRequest->PatchJson(pYYJSONValue, callback, value);
 }
 
 static cell_t http_Delete(IPluginContext *pContext, const cell_t *params)
@@ -204,11 +204,11 @@ static cell_t http_SetBody(IPluginContext *pContext, const cell_t *params)
 static cell_t http_SetJsonBody(IPluginContext *pContext, const cell_t *params)
 {
 	HttpRequest *pHttpRequest = GetHttpPointer(pContext, params[1]);
-	YYJsonWrapper *json = g_WebsocketExt.GetJSONPointer(pContext, params[2]);
-	
-	if (!pHttpRequest || !json) return 0;
-	
-	pHttpRequest->SetJsonBody(json);
+	YYJSONValue *pYYJSONValue = g_pYYJSONManager->GetFromHandle(pContext, params[2]);
+
+	if (!pHttpRequest || !pYYJSONValue) return 0;
+
+	pHttpRequest->SetJsonBody(pYYJSONValue);
 	return 1;
 }
 
@@ -220,7 +220,7 @@ static cell_t http_AddHeader(IPluginContext *pContext, const cell_t *params)
 	char *key, *value;
 	pContext->LocalToString(params[2], &key);
 	pContext->LocalToString(params[3], &value);
-	
+
 	pHttpRequest->AddHeader(key, value);
 	return 1;
 }
@@ -232,10 +232,10 @@ static cell_t http_GetResponseHeader(IPluginContext *pContext, const cell_t *par
 
 	char *key;
 	pContext->LocalToString(params[2], &key);
-	
+
 	const std::string& value = pHttpRequest->GetResponseHeader(key);
 	pContext->StringToLocalUTF8(params[3], params[4], value.c_str(), nullptr);
-	
+
 	return !value.empty();
 }
 
@@ -246,7 +246,7 @@ static cell_t http_HasResponseHeader(IPluginContext *pContext, const cell_t *par
 
 	char *key;
 	pContext->LocalToString(params[2], &key);
-	
+
 	return pHttpRequest->HasResponseHeader(key);
 }
 

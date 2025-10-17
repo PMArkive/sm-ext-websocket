@@ -3,7 +3,7 @@
 #endif
 #define _websocket_included
 
-#include <websocket/yyjson>
+#include <yyjson>
 #include <websocket/http>
 #include <websocket/ws>
 
