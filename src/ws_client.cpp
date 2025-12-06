@@ -6,11 +6,8 @@ WebSocketClient::WebSocketClient(const char* url, uint8_t type)
 {
 	m_webSocket = new ix::WebSocket();
 	m_webSocket->setUrl(url);
-	m_webSocket->disableAutomaticReconnection();
+	m_webSocket->setAutomaticReconnection(false);
 	m_callback_type = type;
-
-	m_extraHeaders["User-Agent"] = "sm-ext-websocket/" + std::string(SMEXT_CONF_VERSION);
-	m_webSocket->setExtraHeaders(m_extraHeaders);
 
 	m_webSocket->setOnMessageCallback([this](const ix::WebSocketMessagePtr& msg) {
 		switch (msg->type)
@@ -39,6 +36,10 @@ WebSocketClient::WebSocketClient(const char* url, uint8_t type)
 				OnError(msg->errorInfo);
 				break;
 			}
+			case ix::WebSocketMessageType::Ping:
+			case ix::WebSocketMessageType::Pong:
+			case ix::WebSocketMessageType::Fragment:
+				break;
 		}
 	});
 }

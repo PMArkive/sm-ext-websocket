@@ -3,6 +3,10 @@
 HttpRequest::HttpRequest(const std::string &url) : m_httpclient(true)
 {
 	m_request = m_httpclient.createRequest(url);
+
+	m_request->logger = [](const std::string& msg) {
+		printf("[HTTP] %s", msg.c_str());
+	};
 }
 
 HttpRequest::~HttpRequest()
@@ -89,7 +93,7 @@ bool HttpRequest::GetVerbose() const
 	return m_request->verbose;
 }
 
-void HttpRequest::onResponse(const ix::HttpResponsePtr response, IPluginFunction *callback, cell_t value)
+void HttpRequest::onResponse(const ix::HttpResponsePtr response, cell_t value)
 {
 	if (!pResponseForward || !pResponseForward->GetFunctionCount())
 	{
@@ -101,7 +105,7 @@ void HttpRequest::onResponse(const ix::HttpResponsePtr response, IPluginFunction
 		m_responseHeaders = response->headers;
 	}
 
-	HttpResponseTaskContext *context = new HttpResponseTaskContext(this, response, callback, value);
+	HttpResponseTaskContext *context = new HttpResponseTaskContext(this, response, value);
 	g_TaskQueue.Push(context);
 }
 
@@ -123,8 +127,8 @@ bool HttpRequest::Get(IPluginFunction *callback, cell_t value)
 {
 	m_request->verb = "GET";
 	return m_httpclient.performRequest(m_request,
-		[this, callback, value](const ix::HttpResponsePtr& response) {
-			onResponse(response, callback, value);
+		[this, value](const ix::HttpResponsePtr& response) {
+			onResponse(response, value);
 		});
 }
 
@@ -135,8 +139,8 @@ bool HttpRequest::PostJson(JsonValue* json, IPluginFunction *callback, cell_t va
 	m_request->verb = "POST";
 	SetJsonBody(json);
 	return m_httpclient.performRequest(m_request,
-		[this, callback, value](const ix::HttpResponsePtr& response) {
-			onResponse(response, callback, value);
+		[this, value](const ix::HttpResponsePtr& response) {
+			onResponse(response, value);
 		});
 }
 
@@ -147,8 +151,8 @@ bool HttpRequest::PutJson(JsonValue* json, IPluginFunction *callback, cell_t val
 	m_request->verb = "PUT";
 	SetJsonBody(json);
 	return m_httpclient.performRequest(m_request,
-		[this, callback, value](const ix::HttpResponsePtr& response) {
-			onResponse(response, callback, value);
+		[this, value](const ix::HttpResponsePtr& response) {
+			onResponse(response, value);
 		});
 }
 
@@ -159,8 +163,8 @@ bool HttpRequest::PatchJson(JsonValue* json, IPluginFunction *callback, cell_t v
 	m_request->verb = "PATCH";
 	SetJsonBody(json);
 	return m_httpclient.performRequest(m_request,
-		[this, callback, value](const ix::HttpResponsePtr& response) {
-			onResponse(response, callback, value);
+		[this, value](const ix::HttpResponsePtr& response) {
+			onResponse(response, value);
 		});
 }
 
@@ -170,8 +174,8 @@ bool HttpRequest::PostForm(IPluginFunction *callback, cell_t value)
 	m_request->body = BuildFormData();
 	m_request->extraHeaders["Content-Type"] = "application/x-www-form-urlencoded";
 	return m_httpclient.performRequest(m_request,
-		[this, callback, value](const ix::HttpResponsePtr& response) {
-			onResponse(response, callback, value);
+		[this, value](const ix::HttpResponsePtr& response) {
+			onResponse(response, value);
 		});
 }
 
@@ -179,8 +183,8 @@ bool HttpRequest::Delete(IPluginFunction *callback, cell_t value)
 {
 	m_request->verb = "DELETE";
 	return m_httpclient.performRequest(m_request,
-		[this, callback, value](const ix::HttpResponsePtr& response) {
-			onResponse(response, callback, value);
+		[this, value](const ix::HttpResponsePtr& response) {
+			onResponse(response, value);
 		});
 }
 
@@ -223,4 +227,97 @@ const ix::WebSocketHttpHeaders& HttpRequest::GetResponseHeaders() const
 {
 	std::lock_guard<std::mutex> lock(m_headersMutex);
 	return m_responseHeaders;
+}
+
+void HttpRequest::SetTLSCertAndKey(const std::string& certFile, const std::string& keyFile)
+{
+	m_tlsOptions.certFile = certFile;
+	m_tlsOptions.keyFile = keyFile;
+
+	if (m_tlsOptions.isValid())
+	{
+		m_httpclient.setTLSOptions(m_tlsOptions);
+	}
+}
+
+void HttpRequest::SetTLSCAFile(const std::string& caFile)
+{
+	m_tlsOptions.caFile = caFile;
+
+	if (m_tlsOptions.isValid())
+	{
+		m_httpclient.setTLSOptions(m_tlsOptions);
+	}
+}
+
+void HttpRequest::SetTLSCiphers(const std::string& ciphers)
+{
+	m_tlsOptions.ciphers = ciphers;
+	m_httpclient.setTLSOptions(m_tlsOptions);
+}
+
+void HttpRequest::SetHostnameValidation(bool enable)
+{
+	m_tlsOptions.disable_hostname_validation = !enable;
+	m_httpclient.setTLSOptions(m_tlsOptions);
+}
+
+bool HttpRequest::GetHostnameValidation() const
+{
+	return !m_tlsOptions.disable_hostname_validation;
+}
+
+void HttpRequest::SetKeepAlive(bool enable)
+{
+	m_httpclient.setKeepAlive(enable);
+}
+
+bool HttpRequest::GetKeepAlive() const
+{
+	return m_httpclient.isKeepAliveEnabled();
+}
+
+void HttpRequest::SetUseConnectionPool(bool enable)
+{
+	m_httpclient.setUseConnectionPool(enable);
+}
+
+bool HttpRequest::GetUseConnectionPool() const
+{
+	return m_httpclient.isUseConnectionPoolEnabled();
+}
+
+void HttpRequest::SetProxy(const std::string& proxyUrl)
+{
+	m_proxyConfig = ix::ProxyConfig::fromUrl(proxyUrl);
+	m_httpclient.setProxyConfig(m_proxyConfig);
+}
+
+void HttpRequest::ClearProxy()
+{
+	m_proxyConfig = ix::ProxyConfig();
+	m_httpclient.setProxyConfig(m_proxyConfig);
+}
+
+bool HttpRequest::HasProxy() const
+{
+	return m_proxyConfig.isEnabled();
+}
+
+void HttpRequest::SetBasicAuth(const std::string& username, const std::string& password)
+{
+	m_request->setBasicAuth(username, password);
+}
+
+void HttpRequest::SetBearerAuth(const std::string& token)
+{
+	m_request->setBearerAuth(token);
+}
+
+void HttpRequest::ClearAuth()
+{
+	m_request->authType = ix::HttpAuthType::None;
+	m_request->authUsername.clear();
+	m_request->authPassword.clear();
+	m_request->authToken.clear();
 }

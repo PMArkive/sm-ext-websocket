@@ -32,6 +32,8 @@ public:
 	ix::WebSocketHttpHeaders m_headers;
 	std::mutex m_headersMutex;
 	ix::WebSocketHttpHeaders m_extraHeaders;
+	ix::SocketTLSOptions m_tlsOptions;
+	ix::ProxyConfig m_proxyConfig;
 	bool m_keepConnecting = false;
 
 	IChangeableForward *pMessageForward = nullptr;

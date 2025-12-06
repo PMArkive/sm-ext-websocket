@@ -25,21 +25,12 @@ public:
 
 	std::mutex m_headersMutex;
 	std::unordered_map<std::string, ix::WebSocketHttpHeaders> m_connectionHeaders;
+	ix::SocketTLSOptions m_tlsOptions;
 
 	IChangeableForward *pMessageForward = nullptr;
 	IChangeableForward *pOpenForward = nullptr;
 	IChangeableForward *pCloseForward = nullptr;
 	IChangeableForward *pErrorForward = nullptr;
-
-	std::shared_ptr<ix::WebSocket> GetClientById(const std::string& clientId)
-	{
-		for (const auto& [websocket, id] : m_webSocketServer.getClients())
-		{
-			if (id == clientId) return websocket;
-		}
-
-		return nullptr;
-	}
 
 	static std::string GetRemoteAddress(const std::shared_ptr<ix::ConnectionState>& connectionState) {
 		return connectionState->getRemoteIp() + ":" + std::to_string(connectionState->getRemotePort());

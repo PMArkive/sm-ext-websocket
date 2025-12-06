@@ -33,6 +33,10 @@ WebSocketServer::WebSocketServer(const std::string& host, int port, int addressF
 				OnError(msg->errorInfo, connectionState);
 				break;
 			}
+			case ix::WebSocketMessageType::Ping:
+			case ix::WebSocketMessageType::Pong:
+			case ix::WebSocketMessageType::Fragment:
+				break;
 		}
 	});
 }
@@ -108,17 +112,14 @@ void WebSocketServer::OnError(ix::WebSocketErrorInfo errorInfo, std::shared_ptr<
 	g_TaskQueue.Push(context);
 }
 
-void WebSocketServer::broadcastMessage(const std::string& message) {
-	auto clients = m_webSocketServer.getClients();
-
-	for (const auto& client : clients)
-	{
-		client.first->send(message);
-	}
+void WebSocketServer::broadcastMessage(const std::string& message)
+{
+	m_webSocketServer.broadcast(message);
 }
 
-bool WebSocketServer::sendToClient(const std::string& clientId, const std::string& message) {
-	auto client = GetClientById(clientId);
+bool WebSocketServer::sendToClient(const std::string& clientId, const std::string& message)
+{
+	auto client = m_webSocketServer.getClientById(clientId);
 	if (!client) return false;
 
 	client->send(message);
@@ -126,8 +127,9 @@ bool WebSocketServer::sendToClient(const std::string& clientId, const std::strin
 	return true;
 }
 
-bool WebSocketServer::disconnectClient(const std::string& clientId) {
-	auto client = GetClientById(clientId);
+bool WebSocketServer::disconnectClient(const std::string& clientId)
+{
+	auto client = m_webSocketServer.getClientById(clientId);
 	if (!client) return false;
 
 	client->stop();
@@ -135,13 +137,12 @@ bool WebSocketServer::disconnectClient(const std::string& clientId) {
 	return true;
 }
 
-std::vector<std::string> WebSocketServer::getClientIds() {
+std::vector<std::string> WebSocketServer::getClientIds()
+{
 	std::vector<std::string> clientIds;
 
-	auto clients = m_webSocketServer.getClients();
-
-	for (const auto& client : clients) {
-		clientIds.push_back(client.second);
+	for (const auto& [websocket, connectionState] : m_webSocketServer.getClients()) {
+		clientIds.push_back(connectionState->getId());
 	}
 
 	return clientIds;
@@ -149,9 +150,8 @@ std::vector<std::string> WebSocketServer::getClientIds() {
 
 bool WebSocketServer::getClientHeaders(const std::string& clientId, ix::WebSocketHttpHeaders& outHeaders)
 {
-	auto client = GetClientById(clientId);
-	if (!client)
-		return false;
+	auto client = m_webSocketServer.getClientById(clientId);
+	if (!client) return false;
 
 	std::lock_guard<std::mutex> lock(m_headersMutex);
 	auto it = m_connectionHeaders.find(clientId);

@@ -44,5 +44,5 @@ CopyFiles('scripting/include', 'addons/sourcemod/scripting/include',
   [ 'websocket.inc']
 )
 CopyFiles('scripting/include/websocket', 'addons/sourcemod/scripting/include/websocket',
-  [ 'ws.inc', 'http.inc']
+  [ 'http.inc', 'ws_client.inc', 'ws_server.inc']
 )

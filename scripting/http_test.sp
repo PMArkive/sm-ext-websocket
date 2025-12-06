@@ -21,7 +21,7 @@ public void OnPluginStart()
 
 Action http_get(int args)
 {
-  HttpRequest request = new HttpRequest("https://httpbin.org/get");
+  HttpRequest request = new HttpRequest("http://127.0.0.1");
   request.AddHeader("User-Agent", "SourceMod HTTP Client");
   request.Get(OnHttpResponse);
   return Plugin_Handled;

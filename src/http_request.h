@@ -36,10 +36,35 @@ public:
 	bool HasResponseHeader(const std::string& key) const;
 	const ix::WebSocketHttpHeaders& GetResponseHeaders() const;
 
-	void onResponse(const ix::HttpResponsePtr response, IPluginFunction *callback, cell_t value);
+	void onResponse(const ix::HttpResponsePtr response, cell_t value);
+
+	// TLS configuration
+	void SetTLSCertAndKey(const std::string& certFile, const std::string& keyFile);
+	void SetTLSCAFile(const std::string& caFile);
+	void SetTLSCiphers(const std::string& ciphers);
+	void SetHostnameValidation(bool enable);
+	bool GetHostnameValidation() const;
+
+	// Connection options
+	void SetKeepAlive(bool enable);
+	bool GetKeepAlive() const;
+	void SetUseConnectionPool(bool enable);
+	bool GetUseConnectionPool() const;
+
+	// Proxy
+	void SetProxy(const std::string& proxyUrl);
+	void ClearProxy();
+	bool HasProxy() const;
+
+	// Authentication
+	void SetBasicAuth(const std::string& username, const std::string& password);
+	void SetBearerAuth(const std::string& token);
+	void ClearAuth();
 
 	ix::HttpClient m_httpclient;
 	ix::HttpRequestArgsPtr m_request;
+	ix::SocketTLSOptions m_tlsOptions;
+	ix::ProxyConfig m_proxyConfig;
 
 	Handle_t m_httpclient_handle = BAD_HANDLE;
 	IChangeableForward *pResponseForward = nullptr;
@@ -55,15 +80,14 @@ private:
 class HttpResponseTaskContext : public ITaskContext
 {
 public:
-	HttpResponseTaskContext(HttpRequest* client, const ix::HttpResponsePtr& response, IPluginFunction *callback, cell_t value)
-		: m_client(client), m_response(response), m_callback(callback), m_value(value){}
+	HttpResponseTaskContext(HttpRequest* client, const ix::HttpResponsePtr& response, cell_t value)
+		: m_client(client), m_response(response), m_value(value){}
 
 	virtual void OnCompleted() override;
 
 private:
 	HttpRequest* m_client;
 	ix::HttpResponsePtr m_response;
-	IPluginFunction *m_callback;
 	cell_t m_value;
 };
 #endif // WEBSOCKETEXTENSION_HTTP_REQUEST_H

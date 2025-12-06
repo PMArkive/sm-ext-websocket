@@ -50,6 +50,9 @@ bool WebsocketExtension::SDK_OnLoad(char* error, size_t maxlen, bool late)
 	g_htHttp = handlesys->CreateType("HttpRequest", &g_HttpHandler, 0, nullptr, &haDefaults, myself->GetIdentity(), nullptr);
 
 	smutils->AddGameFrameHook(&OnGameFrame);
+
+	ix::setUserAgent("sm-ext-websocket/" + std::string(SMEXT_CONF_VERSION));
+	ix::setServerHeader("sm-ext-websocket/" + std::string(SMEXT_CONF_VERSION));
 	return true;
 }
 

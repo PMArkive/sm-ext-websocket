@@ -1,0 +1,65 @@
+# vim: sts=2 ts=8 sw=2 tw=99 et ft=python:
+import os
+
+builder.SetBuildFolder('ixwebsocket')
+
+rvalue = {}
+for cxx in builder.targets:
+  binary = Extension.StaticLibrary(builder, cxx, 'ixwebsocket')
+  binary.compiler.includes += [
+    os.path.join(builder.sourcePath, 'third_party', 'openssl', 'include'),
+    os.path.join(builder.sourcePath, 'third_party', 'ixwebsocket', 'ixwebsocket'),
+    os.path.join(builder.sourcePath, 'third_party', 'zlib'),
+  ]
+
+  binary.compiler.defines += [
+    'IXWEBSOCKET_USE_TLS',
+    'IXWEBSOCKET_USE_OPEN_SSL',
+    'IXWEBSOCKET_USE_ZLIB',
+  ]
+
+  # from IXWebSocket CMakeLists.txt
+  binary.sources += [
+    'ixwebsocket/ixwebsocket/IXBench.cpp',
+    'ixwebsocket/ixwebsocket/IXCancellationRequest.cpp',
+    'ixwebsocket/ixwebsocket/IXConnectionState.cpp',
+    'ixwebsocket/ixwebsocket/IXDNSLookup.cpp',
+    'ixwebsocket/ixwebsocket/IXExponentialBackoff.cpp',
+    'ixwebsocket/ixwebsocket/IXGetFreePort.cpp',
+    'ixwebsocket/ixwebsocket/IXGzipCodec.cpp',
+    'ixwebsocket/ixwebsocket/IXHttp.cpp',
+    'ixwebsocket/ixwebsocket/IXHttpClient.cpp',
+    'ixwebsocket/ixwebsocket/IXHttpServer.cpp',
+    'ixwebsocket/ixwebsocket/IXHttpConnectionPool.cpp',
+    'ixwebsocket/ixwebsocket/IXProxyConfig.cpp',
+    'ixwebsocket/ixwebsocket/IXProxyConnect.cpp',
+    'ixwebsocket/ixwebsocket/IXNetSystem.cpp',
+    'ixwebsocket/ixwebsocket/IXSelectInterrupt.cpp',
+    'ixwebsocket/ixwebsocket/IXSelectInterruptFactory.cpp',
+    'ixwebsocket/ixwebsocket/IXSelectInterruptPipe.cpp',
+    'ixwebsocket/ixwebsocket/IXSelectInterruptEvent.cpp',
+    'ixwebsocket/ixwebsocket/IXSetThreadName.cpp',
+    'ixwebsocket/ixwebsocket/IXSocket.cpp',
+    'ixwebsocket/ixwebsocket/IXSocketConnect.cpp',
+    'ixwebsocket/ixwebsocket/IXSocketFactory.cpp',
+    'ixwebsocket/ixwebsocket/IXSocketOpenSSL.cpp', # SSL support
+    'ixwebsocket/ixwebsocket/IXSocketServer.cpp',
+    'ixwebsocket/ixwebsocket/IXSocketTLSOptions.cpp',
+    'ixwebsocket/ixwebsocket/IXStrCaseCompare.cpp',
+    'ixwebsocket/ixwebsocket/IXUdpSocket.cpp',
+    'ixwebsocket/ixwebsocket/IXUrlParser.cpp',
+    'ixwebsocket/ixwebsocket/IXUuid.cpp',
+    'ixwebsocket/ixwebsocket/IXUserAgent.cpp',
+    'ixwebsocket/ixwebsocket/IXWebSocket.cpp',
+    'ixwebsocket/ixwebsocket/IXWebSocketCloseConstants.cpp',
+    'ixwebsocket/ixwebsocket/IXWebSocketHandshake.cpp',
+    'ixwebsocket/ixwebsocket/IXWebSocketHttpHeaders.cpp',
+    'ixwebsocket/ixwebsocket/IXWebSocketPerMessageDeflate.cpp',
+    'ixwebsocket/ixwebsocket/IXWebSocketPerMessageDeflateCodec.cpp',
+    'ixwebsocket/ixwebsocket/IXWebSocketPerMessageDeflateOptions.cpp',
+    'ixwebsocket/ixwebsocket/IXWebSocketProxyServer.cpp',
+    'ixwebsocket/ixwebsocket/IXWebSocketServer.cpp',
+    'ixwebsocket/ixwebsocket/IXWebSocketTransport.cpp',
+  ]
+
+  rvalue[binary.compiler.target.arch] = builder.Add(binary)

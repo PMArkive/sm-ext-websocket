@@ -1,0 +1,7 @@
+[submodule "third_party/ixwebsocket"]
+	path = third_party/ixwebsocket
+	url = https://github.com/ProjectSky/IXWebSocket.git
+	branch = cpp17-refactor
+[submodule "third_party/zlib"]
+	path = third_party/zlib
+	url = https://github.com/madler/zlib.git

@@ -3,7 +3,7 @@
 
 #define SMEXT_CONF_NAME			"SourceMod WebSocket Extension"
 #define SMEXT_CONF_DESCRIPTION	"Provide WebSocket and HTTP Client Native"
-#define SMEXT_CONF_VERSION		"1.0.7"
+#define SMEXT_CONF_VERSION		"1.0.8"
 #define SMEXT_CONF_AUTHOR		"ProjectSky"
 #define SMEXT_CONF_URL			"https://github.com/ProjectSky/sm-ext-websocket"
 #define SMEXT_CONF_LOGTAG		"websocket"

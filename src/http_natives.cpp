@@ -26,10 +26,10 @@ static cell_t http_CreateRequest(IPluginContext *pContext, const cell_t *params)
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
 	pHttpRequest->m_httpclient_handle = handlesys->CreateHandleEx(g_htHttp, pHttpRequest, &sec, nullptr, &err);
 
-	if (pHttpRequest->m_httpclient_handle == BAD_HANDLE)
+	if (!pHttpRequest->m_httpclient_handle)
 	{
 		pContext->ReportError("Could not create HttpRequest handle (error %d)", err);
-		return BAD_HANDLE;
+		return 0;
 	}
 
 	return pHttpRequest->m_httpclient_handle;
@@ -46,7 +46,8 @@ static cell_t http_Get(IPluginContext *pContext, const cell_t *params)
 		forwards->ReleaseForward(pHttpRequest->pResponseForward);
 	}
 
-	pHttpRequest->pResponseForward = forwards->CreateForwardEx(nullptr, ET_Ignore, 5, nullptr, Param_Cell, Param_String, Param_Cell, Param_Cell, Param_Cell);
+	pHttpRequest->pResponseForward = forwards->CreateForwardEx(nullptr, ET_Ignore, 5, nullptr,
+		Param_Cell, Param_String, Param_Cell, Param_Cell, Param_Cell);
 	if (!pHttpRequest->pResponseForward || !pHttpRequest->pResponseForward->AddFunction(callback))
 	{
 		pContext->ReportError("Could not create response forward.");
@@ -197,7 +198,8 @@ static cell_t http_Delete(IPluginContext *pContext, const cell_t *params)
 		forwards->ReleaseForward(pHttpRequest->pResponseForward);
 	}
 
-	pHttpRequest->pResponseForward = forwards->CreateForwardEx(nullptr, ET_Ignore, 5, nullptr, Param_Cell, Param_String, Param_Cell, Param_Cell, Param_Cell);
+	pHttpRequest->pResponseForward = forwards->CreateForwardEx(nullptr, ET_Ignore, 5, nullptr,
+		Param_Cell, Param_String, Param_Cell, Param_Cell, Param_Cell);
 	if (!pHttpRequest->pResponseForward || !pHttpRequest->pResponseForward->AddFunction(callback))
 	{
 		pContext->ReportError("Could not create response forward.");
@@ -362,6 +364,173 @@ static cell_t http_SetVerbose(IPluginContext *pContext, const cell_t *params)
 	return 1;
 }
 
+static cell_t http_SetTLSCertAndKey(IPluginContext *pContext, const cell_t *params)
+{
+	HttpRequest* pHttpRequest = GetHttpPointer(pContext, params[1]);
+	if (!pHttpRequest) return 0;
+
+	char *certFile, *keyFile;
+	pContext->LocalToString(params[2], &certFile);
+	pContext->LocalToString(params[3], &keyFile);
+
+	char certAbsolutePath[PLATFORM_MAX_PATH];
+	char keyAbsolutePath[PLATFORM_MAX_PATH];
+	smutils->BuildPath(Path_Game, certAbsolutePath, sizeof(certAbsolutePath), "%s", certFile);
+	smutils->BuildPath(Path_Game, keyAbsolutePath, sizeof(keyAbsolutePath), "%s", keyFile);
+
+	pHttpRequest->SetTLSCertAndKey(certAbsolutePath, keyAbsolutePath);
+
+	if (!pHttpRequest->m_tlsOptions.isValid())
+	{
+		return pContext->ThrowNativeError("TLS configuration error: %s",
+			pHttpRequest->m_tlsOptions.getErrorMsg().c_str());
+	}
+
+	return 1;
+}
+
+static cell_t http_SetTLSCAFile(IPluginContext *pContext, const cell_t *params)
+{
+	HttpRequest* pHttpRequest = GetHttpPointer(pContext, params[1]);
+	if (!pHttpRequest) return 0;
+
+	char *caFile;
+	pContext->LocalToString(params[2], &caFile);
+
+	if (strcmp(caFile, "SYSTEM") == 0 || strcmp(caFile, "NONE") == 0)
+	{
+		pHttpRequest->SetTLSCAFile(caFile);
+	}
+	else
+	{
+		char absolutePath[PLATFORM_MAX_PATH];
+		smutils->BuildPath(Path_Game, absolutePath, sizeof(absolutePath), "%s", caFile);
+		pHttpRequest->SetTLSCAFile(absolutePath);
+	}
+
+	if (!pHttpRequest->m_tlsOptions.isValid())
+	{
+		return pContext->ThrowNativeError("TLS configuration error: %s",
+			pHttpRequest->m_tlsOptions.getErrorMsg().c_str());
+	}
+
+	return 1;
+}
+
+static cell_t http_SetTLSCiphers(IPluginContext *pContext, const cell_t *params)
+{
+	HttpRequest* pHttpRequest = GetHttpPointer(pContext, params[1]);
+	if (!pHttpRequest) return 0;
+
+	char *ciphers;
+	pContext->LocalToString(params[2], &ciphers);
+	pHttpRequest->SetTLSCiphers(ciphers);
+
+	return 1;
+}
+
+static cell_t http_HostnameValidation(IPluginContext *pContext, const cell_t *params)
+{
+	HttpRequest* pHttpRequest = GetHttpPointer(pContext, params[1]);
+	if (!pHttpRequest) return 0;
+
+	if (params[0] == 2) {
+		pHttpRequest->SetHostnameValidation(params[2] != 0);
+		return 1;
+	}
+
+	return pHttpRequest->GetHostnameValidation();
+}
+
+static cell_t http_KeepAlive(IPluginContext *pContext, const cell_t *params)
+{
+	HttpRequest* pHttpRequest = GetHttpPointer(pContext, params[1]);
+	if (!pHttpRequest) return 0;
+
+	if (params[0] == 2) {
+		pHttpRequest->SetKeepAlive(params[2] != 0);
+		return 1;
+	}
+
+	return pHttpRequest->GetKeepAlive();
+}
+
+static cell_t http_UseConnectionPool(IPluginContext *pContext, const cell_t *params)
+{
+	HttpRequest* pHttpRequest = GetHttpPointer(pContext, params[1]);
+	if (!pHttpRequest) return 0;
+
+	if (params[0] == 2) {
+		pHttpRequest->SetUseConnectionPool(params[2] != 0);
+		return 1;
+	}
+
+	return pHttpRequest->GetUseConnectionPool();
+}
+
+static cell_t http_SetProxy(IPluginContext *pContext, const cell_t *params)
+{
+	HttpRequest* pHttpRequest = GetHttpPointer(pContext, params[1]);
+	if (!pHttpRequest) return 0;
+
+	char *proxyUrl;
+	pContext->LocalToString(params[2], &proxyUrl);
+	pHttpRequest->SetProxy(proxyUrl);
+
+	return 1;
+}
+
+static cell_t http_ClearProxy(IPluginContext *pContext, const cell_t *params)
+{
+	HttpRequest* pHttpRequest = GetHttpPointer(pContext, params[1]);
+	if (!pHttpRequest) return 0;
+
+	pHttpRequest->ClearProxy();
+	return 1;
+}
+
+static cell_t http_HasProxy(IPluginContext *pContext, const cell_t *params)
+{
+	HttpRequest* pHttpRequest = GetHttpPointer(pContext, params[1]);
+	if (!pHttpRequest) return 0;
+
+	return pHttpRequest->HasProxy();
+}
+
+static cell_t http_SetBasicAuth(IPluginContext *pContext, const cell_t *params)
+{
+	HttpRequest* pHttpRequest = GetHttpPointer(pContext, params[1]);
+	if (!pHttpRequest) return 0;
+
+	char *username, *password;
+	pContext->LocalToString(params[2], &username);
+	pContext->LocalToString(params[3], &password);
+	pHttpRequest->SetBasicAuth(username, password);
+
+	return 1;
+}
+
+static cell_t http_SetBearerAuth(IPluginContext *pContext, const cell_t *params)
+{
+	HttpRequest* pHttpRequest = GetHttpPointer(pContext, params[1]);
+	if (!pHttpRequest) return 0;
+
+	char *token;
+	pContext->LocalToString(params[2], &token);
+	pHttpRequest->SetBearerAuth(token);
+
+	return 1;
+}
+
+static cell_t http_ClearAuth(IPluginContext *pContext, const cell_t *params)
+{
+	HttpRequest* pHttpRequest = GetHttpPointer(pContext, params[1]);
+	if (!pHttpRequest) return 0;
+
+	pHttpRequest->ClearAuth();
+	return 1;
+}
+
 const sp_nativeinfo_t http_natives[] =
 {
 	{"HttpRequest.HttpRequest", http_CreateRequest},
@@ -387,5 +556,20 @@ const sp_nativeinfo_t http_natives[] =
 	{"HttpRequest.MaxRedirects.set", http_SetMaxRedirects},
 	{"HttpRequest.Verbose.get", http_GetVerbose},
 	{"HttpRequest.Verbose.set", http_SetVerbose},
+	{"HttpRequest.SetTLSCertAndKey", http_SetTLSCertAndKey},
+	{"HttpRequest.SetTLSCAFile", http_SetTLSCAFile},
+	{"HttpRequest.SetTLSCiphers", http_SetTLSCiphers},
+	{"HttpRequest.HostnameValidation.get", http_HostnameValidation},
+	{"HttpRequest.HostnameValidation.set", http_HostnameValidation},
+	{"HttpRequest.KeepAlive.get", http_KeepAlive},
+	{"HttpRequest.KeepAlive.set", http_KeepAlive},
+	{"HttpRequest.UseConnectionPool.get", http_UseConnectionPool},
+	{"HttpRequest.UseConnectionPool.set", http_UseConnectionPool},
+	{"HttpRequest.SetProxy", http_SetProxy},
+	{"HttpRequest.ClearProxy", http_ClearProxy},
+	{"HttpRequest.HasProxy.get", http_HasProxy},
+	{"HttpRequest.SetBasicAuth", http_SetBasicAuth},
+	{"HttpRequest.SetBearerAuth", http_SetBearerAuth},
+	{"HttpRequest.ClearAuth", http_ClearAuth},
 	{nullptr, nullptr}
 };

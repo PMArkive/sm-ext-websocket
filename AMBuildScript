@@ -156,6 +156,7 @@ class ExtensionConfig(object):
 			'user32.lib',
 			'gdi32.lib',
 			'advapi32.lib',
+			'/ignore:4099' # PDB warnings
 		]
 
 		if builder.options.opt == '1':
@@ -186,6 +187,7 @@ class ExtensionConfig(object):
 		cxx.defines += [
 			'_WINDOWS',
 			'_WIN32_WINNT=0x0601',
+			'NOMINMAX',
 		]
 
 	def Library(self, context, compiler, name):

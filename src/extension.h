@@ -6,6 +6,8 @@
 #include <IXWebSocket.h>
 #include <IXWebSocketServer.h>
 #include <IXHttpClient.h>
+#include "IXUserAgent.h"
+#include "IXProxyConfig.h"
 #include <queue.h>
 #include <random>
 

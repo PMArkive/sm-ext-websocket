@@ -2,15 +2,14 @@
 #include <websocket>
 
 public Plugin myinfo = {
-	name = "WebSocket Client Test",
-	author = "ProjectSky",
-	description = "Used for testing websocket client",
-	version = "1.0.0",
-	url = "https://github.com/ProjectSky/sm-ext-websocket"
+  name = "WebSocket Client Test",
+  author = "ProjectSky",
+  description = "Used for testing websocket client",
+  version = "1.0.0",
+  url = "https://github.com/ProjectSky/sm-ext-websocket"
 }
 
-WebSocket
-g_hWS;
+WebSocket g_hWS;
 
 public void OnPluginStart()
 {
